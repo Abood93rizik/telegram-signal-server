@@ -1,34 +1,22 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# متغير عالمي لحفظ آخر إشارة وصلت
 last_signal = None
 
-@app.route('/')
+@app.route("/", methods=["GET"])
 def home():
-    return "Telegram Signal Server is Running ✅"
+    return jsonify({"last_signal": last_signal})
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
+@app.route("/update_signal", methods=["POST"])
+def update_signal():
     global last_signal
     data = request.get_json()
-
-    if not data or 'signal' not in data:
-        return {"message": "Invalid payload"}, 400
-
-    signal = data['signal']
-    last_signal = signal  # تحديث الإشارة دائماً
-    print(f"Received Signal: {signal}")
-
-    return {"message": "Signal received successfully"}, 200
-
-@app.route('/last-signal', methods=['GET'])
-def get_last_signal():
-    if last_signal:
-        return {"last_signal": last_signal}, 200
+    if data and "signal" in data:
+        last_signal = data["signal"]
+        return jsonify({"message": "Signal updated successfully"}), 200
     else:
-        return {"last_signal": None}, 200
+        return jsonify({"error": "Invalid data"}), 400
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
