@@ -1,40 +1,22 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-last_signal = None
 
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Latest Signal</title>
-    <meta http-equiv="refresh" content="3"> <!-- يحدث الصفحة تلقائياً كل 3 ثواني -->
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-        h1 { font-size: 2em; }
-    </style>
-</head>
-<body>
-    <h1>📢 Latest Signal:</h1>
-    <h2>{{ signal }}</h2>
-</body>
-</html>
-"""
+# تخزين آخر إشارة تم استقبالها
+last_signal = None
 
 @app.route('/', methods=['GET'])
 def home():
-    return render_template_string(HTML_TEMPLATE, signal=last_signal if last_signal else "No signal yet")
+    return f"<h1>Latest Signal:</h1><h2>{last_signal if last_signal else 'No signal yet.'}</h2>"
 
 @app.route('/update', methods=['POST'])
 def update_signal():
     global last_signal
     data = request.get_json()
-    if data and 'signal' in data:
-        last_signal = data['signal']
-        return jsonify({"message": "Signal updated successfully"}), 200
-    else:
-        return jsonify({"error": "Invalid data"}), 400
+    if not data or 'signal' not in data:
+        return jsonify({"error": "Missing 'signal' in request"}), 400
+    last_signal = data['signal']
+    return jsonify({"message": "Signal updated successfully!"})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
